@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "470016687745",
+    "project_id": "crispycrust-31c37",
+    "storage_bucket": "crispycrust-31c37.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:470016687745:android:06d70568dea10a8f51d780",
+        "android_client_info": {
+          "package_name": "com.example.crispycrust"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBc0MBF3TZsIj8_SQ_upIJrj4sOlGtQbjQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

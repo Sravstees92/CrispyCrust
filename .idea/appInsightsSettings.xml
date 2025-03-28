@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.crispycrust" />
+                  <option name="mobileSdkAppId" value="1:470016687745:android:06d70568dea10a8f51d780" />
+                  <option name="projectId" value="crispycrust-31c37" />
+                  <option name="projectNumber" value="470016687745" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

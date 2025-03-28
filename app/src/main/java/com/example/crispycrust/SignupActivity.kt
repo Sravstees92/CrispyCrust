@@ -28,13 +28,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crispycrust.ui.theme.CrispyCrustTheme
 
-class LoginActivity : ComponentActivity() {
+class SignupActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             CrispyCrustTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    LoginScreen()
+                    SignupScreen()
                 }
             }
         }
@@ -42,12 +42,17 @@ class LoginActivity : ComponentActivity() {
 }
 
 @Composable
-fun LoginScreen() {
+fun SignupScreen() {
     val context = LocalContext.current
 
+    var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
     var passwordVisible by remember { mutableStateOf(false) }
+    var confirmVisible by remember { mutableStateOf(false) }
+
     var errorMessage by remember { mutableStateOf("") }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -91,33 +96,39 @@ fun LoginScreen() {
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Logo
                     Image(
                         painter = painterResource(id = R.drawable.logo),
                         contentDescription = "Logo",
-                        modifier = Modifier.size(150.dp)
+                        modifier = Modifier.size(100.dp)
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        text = "Login to Crispy Crust",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("Create your account", fontSize = 22.sp, fontWeight = FontWeight.Bold)
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Email Input
+                    // Full Name
+                    OutlinedTextField(
+                        value = fullName,
+                        onValueChange = { fullName = it },
+                        label = { Text("Full Name") },
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Email
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
                         label = { Text("Email") },
-                        leadingIcon = {
-                            Icon(imageVector = Icons.Default.Email, contentDescription = "Email Icon")
-                        },
+                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(
+                        keyboardOptions = KeyboardOptions.Default.copy(
                             keyboardType = KeyboardType.Email,
                             imeAction = ImeAction.Next
                         ),
@@ -126,74 +137,72 @@ fun LoginScreen() {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Password Input
+                    // Password
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
                         label = { Text("Password") },
-                        leadingIcon = {
-                            Icon(imageVector = Icons.Default.Lock, contentDescription = "Password Icon")
-                        },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                         trailingIcon = {
-                            val icon =
-                                if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                            val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(imageVector = icon, contentDescription = "Toggle Password Visibility")
+                                Icon(icon, contentDescription = "Toggle Password Visibility")
                             }
                         },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Next
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Confirm Password
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text("Confirm Password") },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                        trailingIcon = {
+                            val icon = if (confirmVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                            IconButton(onClick = { confirmVisible = !confirmVisible }) {
+                                Icon(icon, contentDescription = "Toggle Confirm Visibility")
+                            }
+                        },
+                        visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    // Error Message
+                    // Error message
                     if (errorMessage.isNotEmpty()) {
-                        Text(
-                            text = errorMessage,
-                            color = Color.Red,
-                            fontSize = 14.sp
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(errorMessage, color = Color.Red, fontSize = 14.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    // Forgot Password
-                    TextButton(
-                        onClick = {
-                            Toast.makeText(context, "Reset link sent!", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text("Forgot Password?")
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Login Button
+                    // Sign Up Button
                     Button(
                         onClick = {
                             when {
-                                email.isBlank() || password.isBlank() -> {
-                                    errorMessage = "Please fill in all fields"
-                                }
-
-                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
-                                    errorMessage = "Invalid email format"
-                                }
-
-                                password.length < 6 -> {
-                                    errorMessage = "Password must be at least 6 characters"
-                                }
-
+                                fullName.isBlank() -> errorMessage = "Full name is required"
+                                email.isBlank() -> errorMessage = "Email is required"
+                                !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> errorMessage = "Invalid email"
+                                password.length < 6 -> errorMessage = "Password must be at least 6 characters"
+                                password != confirmPassword -> errorMessage = "Passwords do not match"
                                 else -> {
                                     errorMessage = ""
-                                    Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
-                                    context.startActivity(Intent(context, MainActivity::class.java))
+                                    Toast.makeText(context, "Account created successfully!", Toast.LENGTH_SHORT).show()
+                                    context.startActivity(Intent(context, LoginActivity::class.java))
+                                    (context as? SignupActivity)?.finish()
                                 }
                             }
                         },
@@ -202,25 +211,18 @@ fun LoginScreen() {
                             .height(48.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Login")
+                        Text("Sign Up")
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Sign Up Row
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Don't have an account?")
-                        Spacer(modifier = Modifier.width(4.dp))
-                        TextButton(onClick = {
-                            val intent = Intent(context, SignupActivity::class.java)
-                            context.startActivity(intent)
-                        }) {
-                            Text("Sign up", fontWeight = FontWeight.Bold)
-                        }
+                    // Back to Login
+                    TextButton(onClick = {
+                        val intent = Intent(context, LoginActivity::class.java)
+                        context.startActivity(intent)
+                        (context as? SignupActivity)?.finish()
+                    }) {
+                        Text("Already have an account? Log in")
                     }
                 }
             }
