@@ -41,7 +41,10 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.compose.bom.v20240100)
+    implementation(platform(libs.firebase.bom.v3272))
+    implementation(libs.firebase.auth.ktx)
+
+    implementation(platform(libs.androidx.compose.bom.v20240100))
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -59,6 +62,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.material.icons.extended)
-    implementation(libs.firebase.bom)
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
 }

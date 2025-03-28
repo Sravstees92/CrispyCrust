@@ -27,14 +27,21 @@ import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crispycrust.ui.theme.CrispyCrustTheme
+import com.google.firebase.auth.FirebaseAuth
 
 class SignupActivity : ComponentActivity() {
+
+    private lateinit var auth: FirebaseAuth
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        auth = FirebaseAuth.getInstance()
+
         setContent {
             CrispyCrustTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    SignupScreen()
+                    SignupScreen(auth)
                 }
             }
         }
@@ -42,7 +49,7 @@ class SignupActivity : ComponentActivity() {
 }
 
 @Composable
-fun SignupScreen() {
+fun SignupScreen(auth: FirebaseAuth) {
     val context = LocalContext.current
 
     var fullName by remember { mutableStateOf("") }
@@ -54,9 +61,9 @@ fun SignupScreen() {
     var confirmVisible by remember { mutableStateOf(false) }
 
     var errorMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Background image with blur
         Image(
             painter = painterResource(id = R.drawable.background),
             contentDescription = null,
@@ -66,12 +73,9 @@ fun SignupScreen() {
             contentScale = ContentScale.Crop
         )
 
-        // Dark overlay
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0x99000000))
-        )
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0x99000000)))
 
         Column(
             modifier = Modifier
@@ -85,9 +89,7 @@ fun SignupScreen() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.95f)
-                ),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
                 elevation = CardDefaults.cardElevation(10.dp)
             ) {
                 Column(
@@ -103,12 +105,9 @@ fun SignupScreen() {
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
-
                     Text("Create your account", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Full Name
                     OutlinedTextField(
                         value = fullName,
                         onValueChange = { fullName = it },
@@ -121,7 +120,6 @@ fun SignupScreen() {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Email
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -137,7 +135,6 @@ fun SignupScreen() {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Password
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
@@ -160,7 +157,6 @@ fun SignupScreen() {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Confirm Password
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
@@ -183,13 +179,11 @@ fun SignupScreen() {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Error message
                     if (errorMessage.isNotEmpty()) {
-                        Text(errorMessage, color = Color.Red, fontSize = 14.sp)
+                        Text(text = errorMessage, color = Color.Red, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    // Sign Up Button
                     Button(
                         onClick = {
                             when {
@@ -200,23 +194,33 @@ fun SignupScreen() {
                                 password != confirmPassword -> errorMessage = "Passwords do not match"
                                 else -> {
                                     errorMessage = ""
-                                    Toast.makeText(context, "Account created successfully!", Toast.LENGTH_SHORT).show()
-                                    context.startActivity(Intent(context, LoginActivity::class.java))
-                                    (context as? SignupActivity)?.finish()
+                                    isLoading = true
+
+                                    auth.createUserWithEmailAndPassword(email, password)
+                                        .addOnCompleteListener { task ->
+                                            isLoading = false
+                                            if (task.isSuccessful) {
+                                                Toast.makeText(context, "Account created!", Toast.LENGTH_SHORT).show()
+                                                context.startActivity(Intent(context, LoginActivity::class.java))
+                                                (context as? SignupActivity)?.finish()
+                                            } else {
+                                                errorMessage = task.exception?.localizedMessage ?: "Signup failed"
+                                            }
+                                        }
                                 }
                             }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading
                     ) {
-                        Text("Sign Up")
+                        Text(if (isLoading) "Creating..." else "Sign Up")
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Back to Login
                     TextButton(onClick = {
                         val intent = Intent(context, LoginActivity::class.java)
                         context.startActivity(intent)

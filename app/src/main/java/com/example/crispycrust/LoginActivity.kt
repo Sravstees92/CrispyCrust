@@ -27,14 +27,22 @@ import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crispycrust.ui.theme.CrispyCrustTheme
+import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : ComponentActivity() {
+
+    private lateinit var auth: FirebaseAuth
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Initialize Firebase Auth
+        auth = FirebaseAuth.getInstance()
+
         setContent {
             CrispyCrustTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    LoginScreen()
+                    LoginScreen(auth)
                 }
             }
         }
@@ -42,56 +50,40 @@ class LoginActivity : ComponentActivity() {
 }
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(auth: FirebaseAuth) {
     val context = LocalContext.current
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Background image with blur
         Image(
             painter = painterResource(id = R.drawable.background),
             contentDescription = null,
-            modifier = Modifier
-                .fillMaxSize()
-                .blur(3.dp),
+            modifier = Modifier.fillMaxSize().blur(3.dp),
             contentScale = ContentScale.Crop
         )
 
-        // Dark overlay
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0x99000000))
-        )
+        Box(modifier = Modifier.fillMaxSize().background(Color(0x99000000)))
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
+            modifier = Modifier.fillMaxSize().padding(24.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
                 shape = RoundedCornerShape(24.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.95f)
-                ),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
                 elevation = CardDefaults.cardElevation(10.dp)
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Logo
                     Image(
                         painter = painterResource(id = R.drawable.logo),
                         contentDescription = "Logo",
@@ -100,22 +92,15 @@ fun LoginScreen() {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        text = "Login to Crispy Crust",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
+                    Text("Login to Crispy Crust", fontSize = 22.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Email Input
+                    // Email
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
                         label = { Text("Email") },
-                        leadingIcon = {
-                            Icon(imageVector = Icons.Default.Email, contentDescription = "Email Icon")
-                        },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Email, contentDescription = "Email Icon") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email,
@@ -126,19 +111,18 @@ fun LoginScreen() {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Password Input
+                    // Password
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
                         label = { Text("Password") },
-                        leadingIcon = {
-                            Icon(imageVector = Icons.Default.Lock, contentDescription = "Password Icon")
-                        },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Lock, contentDescription = "Password Icon") },
                         trailingIcon = {
-                            val icon =
-                                if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(imageVector = icon, contentDescription = "Toggle Password Visibility")
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle Visibility"
+                                )
                             }
                         },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -152,17 +136,12 @@ fun LoginScreen() {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Error Message
+                    // Error
                     if (errorMessage.isNotEmpty()) {
-                        Text(
-                            text = errorMessage,
-                            color = Color.Red,
-                            fontSize = 14.sp
-                        )
+                        Text(text = errorMessage, color = Color.Red, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(6.dp))
                     }
 
-                    // Forgot Password
                     TextButton(
                         onClick = {
                             Toast.makeText(context, "Reset link sent!", Toast.LENGTH_SHORT).show()
@@ -191,18 +170,27 @@ fun LoginScreen() {
                                 }
 
                                 else -> {
+                                    isLoading = true
                                     errorMessage = ""
-                                    Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
-                                    context.startActivity(Intent(context, MainActivity::class.java))
+
+                                    auth.signInWithEmailAndPassword(email, password)
+                                        .addOnCompleteListener { task ->
+                                            isLoading = false
+                                            if (task.isSuccessful) {
+                                                Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
+                                                context.startActivity(Intent(context, MainActivity::class.java))
+                                            } else {
+                                                errorMessage = task.exception?.localizedMessage ?: "Login failed"
+                                            }
+                                        }
                                 }
                             }
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading
                     ) {
-                        Text("Login")
+                        Text(if (isLoading) "Logging in..." else "Login")
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -216,8 +204,7 @@ fun LoginScreen() {
                         Text("Don't have an account?")
                         Spacer(modifier = Modifier.width(4.dp))
                         TextButton(onClick = {
-                            val intent = Intent(context, SignupActivity::class.java)
-                            context.startActivity(intent)
+                            context.startActivity(Intent(context, SignupActivity::class.java))
                         }) {
                             Text("Sign up", fontWeight = FontWeight.Bold)
                         }
