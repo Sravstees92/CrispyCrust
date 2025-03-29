@@ -7,34 +7,25 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.*
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.crispycrust.ui.theme.CrispyCrustTheme
 import com.example.crispycrust.ui.theme.Orange40
-
-data class CartItem(
-    val name: String,
-    val price: Double,
-    val quantity: Int,
-    val imageRes: Int
-)
-
-val sampleCartItems = listOf(
-    CartItem("BBQ Chicken Pizza", 9.49, 1, R.drawable.bbq_chicken_pizza),
-    CartItem("Pepsi", 1.50, 2, R.drawable.pepsi),
-    CartItem("Garlic Dip", 0.99, 3, R.drawable.garlic_dip)
-)
 
 class CartActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,35 +41,37 @@ class CartActivity : ComponentActivity() {
 @Composable
 fun CartScreen() {
     val context = LocalContext.current
-    val cartItems = remember { sampleCartItems }
-    val total = cartItems.sumOf { it.price * it.quantity }
+    val cartItems = CartManager.cartItems
+    val total by remember { derivedStateOf { CartManager.getTotal() } }
 
     Scaffold(
         bottomBar = {
-            BottomAppBar(
-                containerColor = Color.White,
-                tonalElevation = 8.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            if (cartItems.isNotEmpty()) {
+                BottomAppBar(
+                    containerColor = Color.White,
+                    tonalElevation = 8.dp
                 ) {
-                    Column {
-                        Text("Total:", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                        Text("£${"%.2f".format(total)}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Button(
-                        onClick = {
-                            context.startActivity(Intent(context, PaymentActivity::class.java))
-                        },
-                        shape = RoundedCornerShape(12.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Payment, contentDescription = null)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Proceed to Pay")
+                        Column {
+                            Text("Total:", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                            Text("£${"%.2f".format(total)}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Button(
+                            onClick = {
+                                context.startActivity(Intent(context, PaymentActivity::class.java))
+                            },
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.Payment, contentDescription = null)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Proceed to Pay")
+                        }
                     }
                 }
             }
@@ -101,11 +94,16 @@ fun CartScreen() {
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(cartItems) { item ->
-                        CartItemCard(item)
+                if (cartItems.isEmpty()) {
+                    Text("No items in cart", color = Color.White)
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(cartItems, key = { it.name }) { item ->
+                            CartItemCard(item)
+                        }
                     }
                 }
             }
@@ -122,7 +120,9 @@ fun CartItemCard(item: CartItem) {
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
@@ -133,11 +133,34 @@ fun CartItemCard(item: CartItem) {
                     .padding(end = 12.dp),
                 contentScale = ContentScale.Crop
             )
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(item.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text("Qty: ${item.quantity}", fontSize = 14.sp)
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { CartManager.decrease(item) }) {
+                        Text("-", fontSize = 20.sp)
+                    }
+                    Text(
+                        item.quantity.toString(),
+                        modifier = Modifier.width(24.dp),
+                        fontSize = 16.sp
+                    )
+                    IconButton(onClick = { CartManager.increase(item) }) {
+                        Text("+", fontSize = 20.sp)
+                    }
+                }
             }
-            Text("£${"%.2f".format(item.price * item.quantity)}", fontWeight = FontWeight.Bold)
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    "£${"%.2f".format(item.price * item.quantity)}",
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = { CartManager.remove(item) }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Remove")
+                }
+            }
         }
     }
 }

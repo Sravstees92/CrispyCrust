@@ -35,32 +35,35 @@ class PaymentActivity : ComponentActivity() {
 @Composable
 fun PaymentScreen() {
     val context = LocalContext.current
+    val cartItems = CartManager.cartItems
+    val cartTotal = CartManager.getTotal()
     val deliveryFee = 2.0
-    val cartTotal = sampleCartItems.sumOf { it.price * it.quantity }
     val totalPayable = cartTotal + deliveryFee
 
     var selectedMethod by remember { mutableStateOf("Card") }
-
     val paymentOptions = listOf("Card", "Cash on Delivery", "UPI")
 
     Scaffold(
         bottomBar = {
-            BottomAppBar(
-                containerColor = Color.White,
-                tonalElevation = 8.dp
-            ) {
-                Button(
-                    onClick = {
-                        Toast.makeText(context, "Payment Successful via $selectedMethod", Toast.LENGTH_LONG).show()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(12.dp)
+            if (cartItems.isNotEmpty()) {
+                BottomAppBar(
+                    containerColor = Color.White,
+                    tonalElevation = 8.dp
                 ) {
-                    Icon(Icons.Default.Done, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Pay Now - £${"%.2f".format(totalPayable)}")
+                    Button(
+                        onClick = {
+                            Toast.makeText(context, "Payment Successful via $selectedMethod", Toast.LENGTH_LONG).show()
+                            CartManager.clear() // Optional: clear cart after payment
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Done, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Pay Now - £${"%.2f".format(totalPayable)}")
+                    }
                 }
             }
         }

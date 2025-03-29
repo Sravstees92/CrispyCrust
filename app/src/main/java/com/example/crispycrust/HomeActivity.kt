@@ -2,10 +2,13 @@ package com.example.crispycrust
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +25,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import com.example.crispycrust.ui.theme.CrispyCrustTheme
 import com.example.crispycrust.ui.theme.Orange40
+import androidx.compose.ui.draw.shadow
+
+
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,6 +63,7 @@ val sampleItems = listOf(
 fun HomeScreen() {
     var selectedCategory by remember { mutableStateOf("All") }
     val context = LocalContext.current
+    val selectedItems = remember { mutableStateListOf<MenuItem>() }
 
     val filteredItems = remember(selectedCategory) {
         if (selectedCategory == "All") sampleItems
@@ -65,17 +72,31 @@ fun HomeScreen() {
 
     Scaffold(
         bottomBar = {
-            BottomNavigationBar(
-                onOrdersClick = {
-                    context.startActivity(Intent(context, OrdersActivity::class.java))
-                },
-                onCartClick = {
-                    context.startActivity(Intent(context, CartActivity::class.java))
-                },
-                onPaymentClick = {
-                    context.startActivity(Intent(context, PaymentActivity::class.java))
+            Column {
+                if (selectedItems.isNotEmpty()) {
+                    BottomPopupCart(
+                        selectedCount = selectedItems.size,
+                        onAddToCart = {
+                            CartManager.addItems(selectedItems)
+                            selectedItems.clear()
+                            context.startActivity(Intent(context, CartActivity::class.java))
+                        }
+
+                    )
                 }
-            )
+
+                BottomNavigationBar(
+                    onOrdersClick = {
+                        context.startActivity(Intent(context, OrdersActivity::class.java))
+                    },
+                    onCartClick = {
+                        context.startActivity(Intent(context, CartActivity::class.java))
+                    },
+                    onPaymentClick = {
+                        context.startActivity(Intent(context, PaymentActivity::class.java))
+                    }
+                )
+            }
         }
     ) { innerPadding ->
         Box(
@@ -111,7 +132,11 @@ fun HomeScreen() {
 
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(filteredItems) { item ->
-                        MenuCard(item)
+                        val isSelected = item in selectedItems
+                        MenuCard(item, isSelected = isSelected) {
+                            if (isSelected) selectedItems.remove(item)
+                            else selectedItems.add(item)
+                        }
                     }
                 }
             }
@@ -119,12 +144,20 @@ fun HomeScreen() {
     }
 }
 
+
 @Composable
-fun MenuCard(item: MenuItem) {
+fun MenuCard(item: MenuItem, isSelected: Boolean, onClick: () -> Unit) {
+    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+    val backgroundColor = if (isSelected) Color(0xFFFFE0B2) else Color.White
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .shadow(4.dp, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        border = BorderStroke(2.dp, borderColor)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -145,6 +178,42 @@ fun MenuCard(item: MenuItem) {
         }
     }
 }
+
+@Composable
+fun BottomPopupCart(
+    selectedCount: Int,
+    onAddToCart: () -> Unit
+) {
+    Surface(
+        tonalElevation = 4.dp,
+        shadowElevation = 8.dp,
+        color = Color.White,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(72.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                "$selectedCount item(s) selected",
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp
+            )
+            Button(
+                onClick = onAddToCart,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Add to Cart")
+            }
+        }
+    }
+}
+
 
 @Composable
 fun BottomNavigationBar(
