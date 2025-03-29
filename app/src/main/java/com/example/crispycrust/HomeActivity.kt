@@ -1,10 +1,11 @@
 package com.example.crispycrust
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,10 +16,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import com.example.crispycrust.ui.theme.CrispyCrustTheme
+import com.example.crispycrust.ui.theme.Orange40
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,36 +56,63 @@ val sampleItems = listOf(
 @Composable
 fun HomeScreen() {
     var selectedCategory by remember { mutableStateOf("All") }
+    val context = LocalContext.current
+
     val filteredItems = remember(selectedCategory) {
         if (selectedCategory == "All") sampleItems
         else sampleItems.filter { it.category == selectedCategory }
     }
 
     Scaffold(
-        bottomBar = { BottomNavigationBar() }
-    ) { innerPadding ->
-        Column(modifier = Modifier
-            .padding(innerPadding)
-            .padding(16.dp)) {
-
-            Text("Crispy Crust Menu", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(categories) { category ->
-                    FilterChip(
-                        selected = selectedCategory == category,
-                        onClick = { selectedCategory = category },
-                        label = { Text(category) }
-                    )
+        bottomBar = {
+            BottomNavigationBar(
+                onOrdersClick = {
+                    context.startActivity(Intent(context, OrdersActivity::class.java))
+                },
+                onCartClick = {
+                    context.startActivity(Intent(context, CartActivity::class.java))
+                },
+                onPaymentClick = {
+                    context.startActivity(Intent(context, PaymentActivity::class.java))
                 }
-            }
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Orange40)
+                .padding(innerPadding)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "Crispy Crust Menu",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(categories) { category ->
+                        FilterChip(
+                            selected = selectedCategory == category,
+                            onClick = { selectedCategory = category },
+                            label = { Text(category) }
+                        )
+                    }
+                }
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(filteredItems) { item ->
-                    MenuCard(item)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(filteredItems) { item ->
+                        MenuCard(item)
+                    }
                 }
             }
         }
@@ -117,7 +147,11 @@ fun MenuCard(item: MenuItem) {
 }
 
 @Composable
-fun BottomNavigationBar() {
+fun BottomNavigationBar(
+    onOrdersClick: () -> Unit,
+    onCartClick: () -> Unit,
+    onPaymentClick: () -> Unit
+) {
     NavigationBar {
         NavigationBarItem(
             icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
@@ -129,19 +163,19 @@ fun BottomNavigationBar() {
             icon = { Icon(Icons.Default.ListAlt, contentDescription = "Orders") },
             label = { Text("Orders") },
             selected = false,
-            onClick = { /* TODO: navigate to Orders screen */ }
+            onClick = onOrdersClick
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.ShoppingCart, contentDescription = "Cart") },
             label = { Text("Cart") },
             selected = false,
-            onClick = { /* TODO: navigate to Cart */ }
+            onClick = onCartClick
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.Payment, contentDescription = "Payment") },
             label = { Text("Payment") },
             selected = false,
-            onClick = { /* TODO: navigate to Payment screen */ }
+            onClick = onPaymentClick
         )
     }
 }
