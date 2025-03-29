@@ -178,11 +178,13 @@ fun LoginScreen(auth: FirebaseAuth) {
                                             isLoading = false
                                             if (task.isSuccessful) {
                                                 Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
-                                                context.startActivity(Intent(context, MainActivity::class.java))
+                                                context.startActivity(Intent(context, HomeActivity::class.java))
+                                                (context as? LoginActivity)?.finish()
                                             } else {
                                                 errorMessage = task.exception?.localizedMessage ?: "Login failed"
                                             }
                                         }
+
                                 }
                             }
                         },
